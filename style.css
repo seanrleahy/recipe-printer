@@ -125,3 +125,25 @@ h1, h2 { font-family: Arial, Helvetica, sans-serif; font-weight: 700; }
   .recipe-header h1 { font-size: 16pt; }
   .ingredients-section, .method-section { break-inside: auto; }
 }
+
+
+/* Import helpers and photo review */
+.import-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
+.import-card { border: 1px solid var(--line); border-radius: 9px; background: #fffefa; padding: 18px; }
+.import-card h2, .ocr-review h2 { margin: 0 0 8px; font-size: 16px; }
+.import-card p, .ocr-review > p { color: var(--muted); font-size: 13px; line-height: 1.55; }
+.helper-instructions { font-size: 11px !important; }
+.upload-label { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 11px 14px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.file-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.ocr-review { margin: 30px 0 45px; padding: 22px; border: 1px solid var(--line); border-radius: 9px; background: #fffefa; }
+.ocr-review label { display: block; margin: 12px 0 6px; font-size: 12px; font-weight: 600; }
+.ocr-review input, .ocr-review textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 10px; font: inherit; font-size: 13px; color: var(--ink); background: white; }
+.review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.review-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 10px 0 18px; }
+.ocr-review .status { margin: 8px 0; }
+@media (max-width: 600px) {
+  .entry-panel h1 { font-size: clamp(34px, 9.5vw, 46px); line-height: 1.08; text-wrap: balance; max-width: 100%; }
+  .import-options, .review-grid { grid-template-columns: 1fr; }
+  .review-meta { grid-template-columns: 1fr; gap: 0; }
+  .ocr-review { padding: 16px; }
+}

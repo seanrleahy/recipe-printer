@@ -37,10 +37,8 @@ function normaliseInstructions(instructions) {
   }
   return output.filter(Boolean);
 }
-function renderRecipe(recipe, sourceUrl) {
+function renderRecipe(recipe) {
   document.querySelector("#recipe-title").textContent = recipe.name || "Untitled recipe";
-  document.querySelector("#recipe-category").textContent = recipe.recipeCategory || recipe.recipeCuisine || "RECIPE";
-  document.querySelector("#recipe-description").textContent = recipe.description || "";
   const meta = document.querySelector("#recipe-meta");
   meta.replaceChildren();
   const prep = recipe.prepTime || "";
@@ -48,10 +46,6 @@ function renderRecipe(recipe, sourceUrl) {
   const total = recipe.totalTime || "";
   const yieldText = recipe.recipeYield || "";
   [addMeta("Serves", yieldText), addMeta("Prep time", prep), addMeta("Cook time", cook || total)].filter(Boolean).forEach(x => meta.append(x));
-  const story = recipe.story || "";
-  document.querySelector("#story-section").hidden = !story;
-  document.querySelector("#recipe-story").textContent = story;
-
   const ingredients = Array.isArray(recipe.recipeIngredient) ? recipe.recipeIngredient : [];
   const printableRecipe = document.querySelector("#printable-recipe");
   printableRecipe.classList.toggle("many-ingredients", ingredients.length >= 18);
@@ -70,9 +64,6 @@ function renderRecipe(recipe, sourceUrl) {
     li.textContent = text;
     instructionList.append(li);
   });
-  document.querySelector("#recipe-author").textContent = recipe.author ? `By ${recipe.author}` : "";
-  const source = document.querySelector("#recipe-source");
-  source.textContent = "Source: " + new URL(sourceUrl).hostname;
   entry.hidden = true;
   recipeView.hidden = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -99,7 +90,7 @@ form.addEventListener("submit", async event => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "We couldn't read that recipe page.");
     if (!data.recipe) throw new Error("No structured recipe was found on that page.");
-    renderRecipe(data.recipe, url);
+    renderRecipe(data.recipe);
     setStatus("");
   } catch (error) {
     setStatus(error.message || "Something went wrong. Please try another recipe URL.");

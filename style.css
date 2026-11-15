@@ -137,6 +137,7 @@ h1, h2 { font-family: Arial, Helvetica, sans-serif; font-weight: 700; }
 .file-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .ocr-review { margin: 30px 0 45px; padding: 22px; border: 1px solid var(--line); border-radius: 9px; background: #fffefa; }
 .ocr-review label { display: block; margin: 12px 0 6px; font-size: 12px; font-weight: 600; }
+.import-card textarea { width: 100%; min-height: 130px; margin: 8px 0 12px; border: 1px solid var(--line); border-radius: 6px; padding: 10px; font: inherit; font-size: 13px; color: var(--ink); background: white; resize: vertical; }
 .ocr-review input, .ocr-review textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 10px; font: inherit; font-size: 13px; color: var(--ink); background: white; }
 .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .review-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 10px 0 18px; }

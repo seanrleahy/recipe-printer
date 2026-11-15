@@ -24,6 +24,11 @@
         <button type="submit" id="convert-button">Make it printable <span aria-hidden="true">→</span></button>
       </form>
       <p id="status" class="status" role="status" aria-live="polite"></p>
+      <section id="browser-fallback" class="browser-fallback" hidden aria-live="polite">
+        <h2>This site blocks automatic imports</h2>
+        <p>The recipe page can still be imported from your browser. If you haven’t already, copy the browser helper below and save it as a bookmark. Then open the recipe page and tap that bookmark.</p>
+        <button type="button" class="button button-dark" id="open-blocked-page">Open this recipe page ↗</button>
+      </section>
 
       <section class="import-options" aria-label="Other ways to import a recipe">
         <div class="import-card">

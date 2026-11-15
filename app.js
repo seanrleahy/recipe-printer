@@ -11,7 +11,6 @@ function setStatus(message, isSuccess = false) {
   statusEl.textContent = message;
   statusEl.classList.toggle("success", isSuccess);
 }
-
 function addMeta(label, value) {
   if (!value) return null;
   const item = document.createElement("div");
@@ -25,7 +24,6 @@ function addMeta(label, value) {
   item.append(key, val);
   return item;
 }
-
 function normaliseInstructions(instructions) {
   if (!Array.isArray(instructions)) return [];
   const output = [];
@@ -39,12 +37,10 @@ function normaliseInstructions(instructions) {
   }
   return output.filter(Boolean);
 }
-
 function renderRecipe(recipe, sourceUrl) {
   document.querySelector("#recipe-title").textContent = recipe.name || "Untitled recipe";
   document.querySelector("#recipe-category").textContent = recipe.recipeCategory || recipe.recipeCuisine || "RECIPE";
   document.querySelector("#recipe-description").textContent = recipe.description || "";
-
   const meta = document.querySelector("#recipe-meta");
   meta.replaceChildren();
   const prep = recipe.prepTime || "";
@@ -52,12 +48,13 @@ function renderRecipe(recipe, sourceUrl) {
   const total = recipe.totalTime || "";
   const yieldText = recipe.recipeYield || "";
   [addMeta("Serves", yieldText), addMeta("Prep time", prep), addMeta("Cook time", cook || total)].filter(Boolean).forEach(x => meta.append(x));
-
   const story = recipe.story || "";
   document.querySelector("#story-section").hidden = !story;
   document.querySelector("#recipe-story").textContent = story;
 
   const ingredients = Array.isArray(recipe.recipeIngredient) ? recipe.recipeIngredient : [];
+  const printableRecipe = document.querySelector("#printable-recipe");
+  printableRecipe.classList.toggle("many-ingredients", ingredients.length >= 18);
   const ingredientList = document.querySelector("#ingredient-list");
   ingredientList.replaceChildren();
   ingredients.forEach(text => {
@@ -65,7 +62,6 @@ function renderRecipe(recipe, sourceUrl) {
     li.textContent = text;
     ingredientList.append(li);
   });
-
   const instructions = normaliseInstructions(recipe.recipeInstructions || []);
   const instructionList = document.querySelector("#instruction-list");
   instructionList.replaceChildren();
@@ -74,7 +70,6 @@ function renderRecipe(recipe, sourceUrl) {
     li.textContent = text;
     instructionList.append(li);
   });
-
   document.querySelector("#recipe-author").textContent = recipe.author ? `By ${recipe.author}` : "";
   const source = document.querySelector("#recipe-source");
   source.textContent = "Source: " + new URL(sourceUrl).hostname;
@@ -82,7 +77,6 @@ function renderRecipe(recipe, sourceUrl) {
   recipeView.hidden = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
-
 form.addEventListener("submit", async event => {
   event.preventDefault();
   const url = urlInput.value.trim();
@@ -93,7 +87,6 @@ form.addEventListener("submit", async event => {
     setStatus("Please enter a complete webpage URL, including https://");
     return;
   }
-
   convertButton.disabled = true;
   convertButton.textContent = "Extracting recipe…";
   setStatus("Reading the recipe page. This can take a few seconds.");
@@ -115,7 +108,6 @@ form.addEventListener("submit", async event => {
     convertButton.innerHTML = 'Make it printable <span aria-hidden="true">→</span>';
   }
 });
-
 document.querySelector("#print-button").addEventListener("click", () => window.print());
 document.querySelector("#back-button").addEventListener("click", () => {
   recipeView.hidden = true;

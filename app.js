@@ -90,7 +90,7 @@ form.addEventListener("submit", async event => {
   }
   convertButton.disabled = true;
   convertButton.textContent = "Extracting recipe…";
-  browserFallback.hidden = true;
+  if (browserFallback) browserFallback.hidden = true;
   setStatus("Reading the recipe page. This can take a few seconds.");
   try {
     const response = await fetch(API_ENDPOINT, {
@@ -112,7 +112,7 @@ form.addEventListener("submit", async event => {
     convertButton.innerHTML = 'Make it printable <span aria-hidden="true">→</span>';
   }
 });
-document.querySelector("#open-blocked-page").addEventListener("click", () => { const url = urlInput.value.trim(); if (url) window.open(url, "_blank", "noopener"); });
+document.querySelector("#open-blocked-page")?.addEventListener("click", () => { const url = urlInput.value.trim(); if (url) window.open(url, "_blank", "noopener"); });
 document.querySelector("#print-button").addEventListener("click", () => window.print());
 document.querySelector("#back-button").addEventListener("click", () => {
   recipeView.hidden = true;

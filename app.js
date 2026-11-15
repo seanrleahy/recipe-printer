@@ -277,7 +277,7 @@ function parsePastedRecipe(raw) {
   }
   const titleLimit = ingredientStartIndex >= 0 ? ingredientStartIndex : inferredStart >= 0 ? inferredStart : servesIndex >= 0 ? servesIndex : Math.min(cleaned.length, 8);
   const titleCandidates = cleaned.slice(0, titleLimit).filter(x => x.length > 2 && x.length < 110 && !heading.test(x) && !/^(?:serves?|makes?|prep|cook|total|updated|published|by\s)\b/i.test(x));
-  const title = titleCandidates.length ? titleCandidates[0] : "";
+  const title = titleCandidates.length ? titleCandidates[0] : (cleaned.find(x => x.length > 2 && x.length < 110 && !heading.test(x) && !footer.test(x) && !/^(?:serves?|makes?|yield|prep|cook|total|updated|published|by\\s)\\b/i.test(x)) || "");
   return {
     name: title,
     recipeYield: servesMatch ? servesMatch[1].trim() : "",

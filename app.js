@@ -225,28 +225,67 @@ imageInput.addEventListener("change", async () => {
 });
 
 function parsePastedRecipe(raw) {
-  const lines = raw.split(/\r?\n/).map(x => x.replace(/\s+/g," ").trim()).filter(Boolean);
-  const heading = /^(ingredients?|what you need|you will need|method|instructions?|directions|preparation|to make|steps?)\s*:?[.]?$/i;
-  const quantity = /^(?:\d|½|⅓|⅔|¼|¾|\.?\d|a\s+(?:pinch|handful|splash|little|knob)|few\b|some\b|to taste\b)/i;
-  const action = /^(?:place|preheat|heat|add|stir|mix|whisk|cook|bake|roast|fry|simmer|bring|pour|season|peel|chop|slice|grate|combine|fold|serve|drain|meanwhile|next|then|once|with a few|transfer|remove|leave|cover|reduce|allow|tip|blend|toast|brush|sprinkle|squeeze|put)\b/i;
-  const servesMatch = raw.match(/(?:serves?|makes?)\s*:?[ \t]*([^\r\n]+)/i);
+  const lines = raw.split(/\r?\n/).map(x => x.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const ingredientHeading = /^(?:ingredients?|what you need|you will need|shopping list)\s*:?[.]?$/i;
+  const methodHeading = /^(?:method|instructions?|directions|preparation|to make|steps?|how to make)\s*:?[.]?$/i;
+  const heading = /^(?:ingredients?|what you need|you will need|shopping list|method|instructions?|directions|preparation|to make|steps?|how to make)\s*:?[.]?$/i;
+  const quantity = /^(?:\d+(?:[.,/]\d+)?\s*(?:g|kg|ml|l|oz|lb|lbs|tsp|tbsp|teaspoons?|tablespoons?|cups?|cloves?|cans?|tin|bunch|sprigs?|slices?|pieces?|large|small|medium)?\b|[½⅓⅔¼¾⅛⅜⅝⅞]|a\s+(?:pinch|handful|splash|little|knob)|few\b|some\b|to taste\b)/i;
+  const bullet = /^(?:[-*•▪◦‣]|\d+[.)])\s*/;
+  const action = /^(?:place|preheat|heat|add|stir|mix|whisk|cook|bake|roast|fry|simmer|bring|pour|season|peel|chop|slice|grate|combine|fold|serve|drain|meanwhile|next|then|once|transfer|remove|leave|cover|reduce|allow|tip|blend|toast|brush|sprinkle|squeeze|put|set|spread|arrange|marinate|knead|roll|divide|pour|melt|beat|fold|cut|turn|check|taste|finish|garnish|soak|rinse|pat|line|grease|preheat|after|when|while)\b/i;
+  const footer = /^(?:header image by|image by|photo by|photograph by|words by|recipe by|to learn all about|hungry for more|sign up|subscribe|read more|related recipes|you may also like|copyright|©|follow us)\b/i;
+  const cleanLine = line => line.replace(bullet, "").replace(/^\s*step\s*\d+\s*[:.)-]?\s*/i, "").trim();
+  const cleaned = lines.map(cleanLine);
+  const servesMatch = raw.match(/(?:serves?|makes?|yield)\s*:?[ \t]*([^\r\n]+)/i);
   const getTime = re => (raw.match(re) || [])[1] || "";
-  const ingredientStart = lines.findIndex(x => /^(ingredients?|what you need|you will need)\s*:?[.]?$/i.test(x));
-  const methodStart = lines.findIndex(x => /^(method|instructions?|directions|preparation|to make|steps?)\s*:?[.]?$/i.test(x));
-  const servesIndex = lines.findIndex(x => /^(serves?|makes?)\s*:?\s*\S+/i.test(x));
-  let title = servesIndex > 0 ? lines.slice(0,servesIndex).filter(x=>x.length<110).slice(-1)[0] : "";
-  if (!title && ingredientStart > 0) title=lines.slice(0,ingredientStart).filter(x=>x.length<110).slice(-1)[0];
-  const start = ingredientStart>=0 ? ingredientStart+1 : servesIndex>=0 ? servesIndex+1 : -1;
-  let ingredients = start>=0 ? lines.slice(start,methodStart>start?methodStart:lines.length) : [];
-  ingredients=ingredients.filter(x=>!/^to serve\s*:?[.]?$/i.test(x));
-  const inferred=ingredients.findIndex(x=>action.test(x)&&!quantity.test(x));
-  let instructions=methodStart>=0 ? lines.slice(methodStart+1) : [];
-  if(methodStart<0 && inferred>=0) instructions=ingredients.splice(inferred);
-  ingredients=ingredients.filter(x=>quantity.test(x)||(ingredientStart>=0&&x.length>1));
-  const footerIndex=instructions.findIndex(x=>/^(?:header image by|image by|photo by|to learn all about|hungry for more|sign up|copyright|©)\b/i.test(x));
-  if(footerIndex>=0) instructions=instructions.slice(0,footerIndex);
-  instructions=instructions.filter(x=>! /^(?:by|photo by|image by)\s/i.test(x));
-  return {name:title||"",recipeYield:servesMatch?servesMatch[1].trim():"",prepTime:getTime(/prep(?:aration)?\s*time\s*:?\s*([^\r\n]+)/i),cookTime:getTime(/cook(?:ing)?\s*time\s*:?\s*([^\r\n]+)/i),recipeIngredient:ingredients,recipeInstructions:instructions};
+  const ingredientStart = cleaned.findIndex(x => ingredientHeading.test(x));
+  const methodStart = cleaned.findIndex(x => methodHeading.test(x));
+  const servesIndex = cleaned.findIndex(x => /^(?:serves?|makes?|yield)\s*:?\s*\S+/i.test(x));
+  const explicitIngredients = ingredientStart >= 0;
+  const isIngredient = line => {
+    if (!line || heading.test(line) || footer.test(line)) return false;
+    if (quantity.test(line)) return true;
+    return /^(?:[½⅓⅔¼¾⅛⅜⅝⅞]|\d+)\s*(?:x\s*)?(?:ripe|fresh|large|small|medium|finely|roughly|chopped|sliced|grated|crushed|whole|frozen|dried|ground|tinned|canned)\b/i.test(line);
+  };
+  let inferredStart = -1;
+  if (!explicitIngredients) {
+    for (let i = 0; i < cleaned.length - 1; i++) {
+      const run = cleaned.slice(i, i + 4).filter(isIngredient).length;
+      if (run >= 2) { inferredStart = i; break; }
+    }
+  }
+  const ingredientStartIndex = explicitIngredients ? ingredientStart + 1 : inferredStart;
+  let methodStartIndex = methodStart >= 0 ? methodStart + 1 : -1;
+  if (methodStartIndex < 0 && ingredientStartIndex >= 0) {
+    const scanFrom = ingredientStartIndex + 1;
+    methodStartIndex = cleaned.findIndex((line, i) => i >= scanFrom && action.test(line) && !isIngredient(line));
+    if (methodStartIndex < 0) {
+      const firstNumbered = cleaned.findIndex((line, i) => i >= scanFrom && /^\d+[.)]\s+/.test(lines[i]));
+      if (firstNumbered >= 0) methodStartIndex = firstNumbered;
+    }
+  }
+  let ingredientEnd = methodStartIndex >= 0 ? (methodStart >= 0 ? methodStart - 1 : methodStartIndex) : cleaned.length;
+  if (methodStart >= 0 && ingredientStartIndex >= 0) ingredientEnd = methodStart - 1;
+  let ingredients = ingredientStartIndex >= 0 ? cleaned.slice(ingredientStartIndex, ingredientEnd) : [];
+  ingredients = ingredients.filter(x => !heading.test(x) && !/^to serve\s*:?[.]?$/i.test(x) && !footer.test(x));
+  if (!explicitIngredients) ingredients = ingredients.filter(isIngredient);
+  let instructions = methodStart >= 0 ? cleaned.slice(methodStart + 1) : methodStartIndex >= 0 ? cleaned.slice(methodStartIndex) : [];
+  const footerIndex = instructions.findIndex(x => footer.test(x));
+  if (footerIndex >= 0) instructions = instructions.slice(0, footerIndex);
+  instructions = instructions.filter(x => !heading.test(x) && !footer.test(x) && !/^(?:by|photo by|image by)\s/i.test(x));
+  if (!instructions.length && methodStart >= 0) {
+    instructions = cleaned.slice(methodStart + 1).filter(x => !footer.test(x) && !heading.test(x));
+  }
+  const titleLimit = ingredientStartIndex >= 0 ? ingredientStartIndex : inferredStart >= 0 ? inferredStart : servesIndex >= 0 ? servesIndex : Math.min(cleaned.length, 8);
+  const titleCandidates = cleaned.slice(0, titleLimit).filter(x => x.length > 2 && x.length < 110 && !heading.test(x) && !/^(?:serves?|makes?|prep|cook|total|updated|published|by\s)\b/i.test(x));
+  const title = titleCandidates.length ? titleCandidates[titleCandidates.length - 1] : "";
+  return {
+    name: title,
+    recipeYield: servesMatch ? servesMatch[1].trim() : "",
+    prepTime: getTime(/prep(?:aration)?\s*time\s*:?\s*([^\r\n]+)/i),
+    cookTime: getTime(/cook(?:ing)?\s*time\s*:?\s*([^\r\n]+)/i),
+    recipeIngredient: ingredients,
+    recipeInstructions: instructions
+  };
 }
 document.querySelector("#make-from-pasted").addEventListener("click", () => {
   const raw=document.querySelector("#pasted-recipe-text").value.trim();

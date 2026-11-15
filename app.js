@@ -5,6 +5,7 @@ const form = document.querySelector("#recipe-form");
 const urlInput = document.querySelector("#recipe-url");
 const convertButton = document.querySelector("#convert-button");
 const statusEl = document.querySelector("#status");
+const browserFallback = document.querySelector("#browser-fallback");
 const entry = document.querySelector("#entry");
 const recipeView = document.querySelector("#recipe-view");
 const imageInput = document.querySelector("#recipe-images");
@@ -89,6 +90,7 @@ form.addEventListener("submit", async event => {
   }
   convertButton.disabled = true;
   convertButton.textContent = "Extracting recipe…";
+  browserFallback.hidden = true;
   setStatus("Reading the recipe page. This can take a few seconds.");
   try {
     const response = await fetch(API_ENDPOINT, {
@@ -97,22 +99,26 @@ form.addEventListener("submit", async event => {
       body: JSON.stringify({ url })
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "We couldn't read that recipe page.");
+    if (!response.ok) { const error = new Error(data.error || "We couldn't read that recipe page."); error.status = response.status; throw error; }
     if (!data.recipe) throw new Error("No structured recipe was found on that page.");
     renderRecipe(data.recipe);
     setStatus("");
   } catch (error) {
-    setStatus(error.message || "Something went wrong. Please try another recipe URL.");
+    const blockedBySite = error.status === 403 || /403|forbidden|blocked the request/i.test(error.message || "");
+    if (blockedBySite) { browserFallback.hidden = false; setStatus("This site is blocking automatic import. Use the browser-page helper below instead."); }
+    else { setStatus(error.message || "Something went wrong. Please try another recipe URL."); }
   } finally {
     convertButton.disabled = false;
     convertButton.innerHTML = 'Make it printable <span aria-hidden="true">→</span>';
   }
 });
+document.querySelector("#open-blocked-page").addEventListener("click", () => { const url = urlInput.value.trim(); if (url) window.open(url, "_blank", "noopener"); });
 document.querySelector("#print-button").addEventListener("click", () => window.print());
 document.querySelector("#back-button").addEventListener("click", () => {
   recipeView.hidden = true;
   entry.hidden = false;
   setStatus("");
+  browserFallback.hidden = true;
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 

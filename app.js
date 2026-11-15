@@ -229,7 +229,7 @@ function parsePastedRecipe(raw) {
   const ingredientHeading = /^(?:ingredients?|what you need|you will need|shopping list)\s*:?[.]?$/i;
   const methodHeading = /^(?:method|instructions?|directions|preparation|to make|steps?|how to make)\s*:?[.]?$/i;
   const heading = /^(?:ingredients?|what you need|you will need|shopping list|method|instructions?|directions|preparation|to make|steps?|how to make)\s*:?[.]?$/i;
-  const quantity = /^(?:\d+(?:[.,/]\d+)?\s*(?:g|kg|ml|l|oz|lb|lbs|tsp|tbsp|teaspoons?|tablespoons?|cups?|cloves?|cans?|tin|bunch|sprigs?|slices?|pieces?|large|small|medium)?\b|[½⅓⅔¼¾⅛⅜⅝⅞]|a\s+(?:pinch|handful|splash|little|knob)|few\b|some\b|to taste\b)/i;
+  const quantity = /^(?:\d+(?:[.,/]\d+)?(?:\s*(?:g|kg|ml|l|oz|lb|lbs|tsp|tbsp|teaspoons?|tablespoons?|cups?|cloves?|cans?|tin|bunch|sprigs?|slices?|pieces?|large|small|medium)\b)?|[½⅓⅔¼¾⅛⅜⅝⅞]|a\s+(?:pinch|handful|splash|little|knob)|few\b|some\b|to taste\b)/i;
   const bullet = /^(?:[-*•▪◦‣]|\d+[.)])\s*/;
   const action = /^(?:place|preheat|heat|add|stir|mix|whisk|cook|bake|roast|fry|simmer|bring|pour|season|peel|chop|slice|grate|combine|fold|serve|drain|meanwhile|next|then|once|transfer|remove|leave|cover|reduce|allow|tip|blend|toast|brush|sprinkle|squeeze|put|set|spread|arrange|marinate|knead|roll|divide|pour|melt|beat|fold|cut|turn|check|taste|finish|garnish|soak|rinse|pat|line|grease|preheat|after|when|while)\b/i;
   const footer = /^(?:header image by|image by|photo by|photograph by|words by|recipe by|to learn all about|hungry for more|sign up|subscribe|read more|related recipes|you may also like|copyright|©|follow us)\b/i;
@@ -264,7 +264,7 @@ function parsePastedRecipe(raw) {
     }
   }
   let ingredientEnd = methodStartIndex >= 0 ? (methodStart >= 0 ? methodStart - 1 : methodStartIndex) : cleaned.length;
-  if (methodStart >= 0 && ingredientStartIndex >= 0) ingredientEnd = methodStart - 1;
+  if (methodStart >= 0 && ingredientStartIndex >= 0) ingredientEnd = methodStart;
   let ingredients = ingredientStartIndex >= 0 ? cleaned.slice(ingredientStartIndex, ingredientEnd) : [];
   ingredients = ingredients.filter(x => !heading.test(x) && !/^to serve\s*:?[.]?$/i.test(x) && !footer.test(x));
   if (!explicitIngredients) ingredients = ingredients.filter(isIngredient);
@@ -277,7 +277,7 @@ function parsePastedRecipe(raw) {
   }
   const titleLimit = ingredientStartIndex >= 0 ? ingredientStartIndex : inferredStart >= 0 ? inferredStart : servesIndex >= 0 ? servesIndex : Math.min(cleaned.length, 8);
   const titleCandidates = cleaned.slice(0, titleLimit).filter(x => x.length > 2 && x.length < 110 && !heading.test(x) && !/^(?:serves?|makes?|prep|cook|total|updated|published|by\s)\b/i.test(x));
-  const title = titleCandidates.length ? titleCandidates[titleCandidates.length - 1] : "";
+  const title = titleCandidates.length ? titleCandidates[0] : "";
   return {
     name: title,
     recipeYield: servesMatch ? servesMatch[1].trim() : "",

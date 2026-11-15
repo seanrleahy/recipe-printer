@@ -32,20 +32,20 @@
 
       <section class="import-options" aria-label="Other ways to import a recipe">
         <div class="import-card">
-          <h2>Import from a browser page</h2>
-          <p>For BBC and other sites that block automatic imports, use a bookmark helper while viewing the recipe.</p>
-          <button type="button" class="button button-quiet" id="copy-import-helper">Copy browser helper</button>
-          <p class="helper-instructions">Copy the helper, create a bookmark in your browser, then edit that bookmark and paste the copied text into its URL/address field. Open a recipe page and tap the bookmark to send its recipe to this printer.</p>
-        </div>
-        <div class="import-card">
-        <div class="import-card">
           <h2>Paste recipe text</h2>
-          <p>If a website won't import automatically, select and copy the recipe text on that page, then paste it here. You can also paste text from a book, email or document.</p>
+          <p>If a website won't import automatically, open the recipe page, select and copy the recipe title, ingredients and method, then paste them here.</p>
           <label class="sr-only" for="pasted-recipe-text">Recipe text</label>
           <textarea id="pasted-recipe-text" rows="7" placeholder="Paste the recipe here — include the title, ingredients and method…"></textarea>
           <button type="button" class="button button-dark" id="make-from-pasted">Find ingredients and method</button>
           <p id="paste-status" class="status" role="status" aria-live="polite"></p>
         </div>
+        <div class="import-card">
+          <h2>Import from a browser page</h2>
+          <p>For sites that block automatic imports, use a bookmark helper while viewing the recipe.</p>
+          <button type="button" class="button button-quiet" id="copy-import-helper">Copy browser helper</button>
+          <p class="helper-instructions">Copy the helper, create a bookmark in your browser, then edit that bookmark and paste the copied text into its URL/address field. Open a recipe page and tap the bookmark to send its recipe to this printer.</p>
+        </div>
+        <div class="import-card">
           <h2>Upload recipe photos</h2>
           <p>Choose photos or screenshots of a printed or handwritten recipe. Text recognition happens on this device.</p>
           <label class="upload-label" for="recipe-images">Choose recipe photos</label>

@@ -16,14 +16,54 @@
 
     <section id="entry" class="entry-panel">
       <p class="eyebrow">LESS SCROLLING. MORE COOKING.</p>
-      <h1>Turn any recipe into a<br>printable page.</h1>
-      <p class="intro">Paste a recipe link. We’ll extract the ingredients and method and leave the clutter behind.</p>
+      <h1>Turn any recipe into a printable page.</h1>
+      <p class="intro">Paste a recipe link, import a recipe from the page open in your browser, or upload photos of a recipe. We’ll make a clean page to print.</p>
       <form id="recipe-form" class="url-form">
         <label class="sr-only" for="recipe-url">Recipe webpage URL</label>
         <input id="recipe-url" name="url" type="url" placeholder="https://example.com/your-recipe" required autocomplete="url">
         <button type="submit" id="convert-button">Make it printable <span aria-hidden="true">→</span></button>
       </form>
       <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <section class="import-options" aria-label="Other ways to import a recipe">
+        <div class="import-card">
+          <h2>Import from a browser page</h2>
+          <p>For BBC and other sites that block automatic imports, use a bookmark helper while viewing the recipe.</p>
+          <button type="button" class="button button-quiet" id="copy-import-helper">Copy browser helper</button>
+          <p class="helper-instructions">Copy the helper, create a bookmark in your browser, then edit that bookmark and paste the copied text into its URL/address field. Open a recipe page and tap the bookmark to send its recipe to this printer.</p>
+        </div>
+        <div class="import-card">
+          <h2>Upload recipe photos</h2>
+          <p>Choose photos or screenshots of a printed or handwritten recipe. Text recognition happens on this device.</p>
+          <label class="upload-label" for="recipe-images">Choose recipe photos</label>
+          <input id="recipe-images" class="file-input" type="file" accept="image/*" multiple>
+          <p class="helper-instructions">For best results, use clear, well-lit images with the text facing upright. You can select several pages.</p>
+          <p id="ocr-status" class="status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section id="ocr-review" class="ocr-review" hidden>
+        <h2>Review the recognised recipe</h2>
+        <p>Check the text carefully — photo recognition can make mistakes. Edit anything that needs correcting, then make the printable page.</p>
+        <label for="ocr-title">Recipe title</label>
+        <input id="ocr-title" type="text" placeholder="Recipe title">
+        <div class="review-grid">
+          <div>
+            <label for="ocr-ingredients">Ingredients (one per line)</label>
+            <textarea id="ocr-ingredients" rows="10"></textarea>
+          </div>
+          <div>
+            <label for="ocr-method">Method (one step per paragraph)</label>
+            <textarea id="ocr-method" rows="10"></textarea>
+          </div>
+        </div>
+        <div class="review-meta">
+          <label>Serves <input id="ocr-serves" type="text" placeholder="e.g. 4"></label>
+          <label>Prep time <input id="ocr-prep" type="text" placeholder="e.g. 15 min"></label>
+          <label>Cook time <input id="ocr-cook" type="text" placeholder="e.g. 30 min"></label>
+        </div>
+        <button type="button" class="button button-dark" id="make-from-photos">Make it printable →</button>
+      </section>
       <p class="privacy-note">No account. No saved recipes. Just a clean page to print.</p>
     </section>
 

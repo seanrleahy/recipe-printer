@@ -105,8 +105,18 @@ form.addEventListener("submit", async event => {
     setStatus("");
   } catch (error) {
     const blockedBySite = error.status === 403 || /403|forbidden|blocked the request/i.test(error.message || "");
-    if (blockedBySite) { browserFallback.hidden = false; setStatus("This site is blocking automatic import. Use the browser-page helper below instead."); }
-    else { setStatus(error.message || "Something went wrong. Please try another recipe URL."); }
+    const missingStructuredData = error.status === 422 || /couldn't find structured recipe data|no structured recipe/i.test(error.message || "");
+    if (blockedBySite) {
+      browserFallback.hidden = false;
+      setStatus("This site is blocking automatic import. You can paste the recipe text below instead.");
+    } else if (missingStructuredData) {
+      setStatus("This page doesn't provide recipe data in a format the importer can read. Copy the recipe title, ingredients and method from the page, then paste them in the box below.");
+      const pasteBox = document.querySelector("#pasted-recipe-text");
+      pasteBox?.scrollIntoView({ behavior: "smooth", block: "center" });
+      pasteBox?.focus({ preventScroll: true });
+    } else {
+      setStatus(error.message || "Something went wrong. Please try another recipe URL.");
+    }
   } finally {
     convertButton.disabled = false;
     convertButton.innerHTML = 'Make it printable <span aria-hidden="true">→</span>';

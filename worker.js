@@ -99,20 +99,14 @@ function extractRecipe(html) {
   if (!candidates.length) return null;
   const item = candidates.sort((a, b) => scoreRecipe(b) - scoreRecipe(a))[0];
   const instructions = flattenInstructions(item.recipeInstructions || []);
-  const story = extractIntro(html, item.description || "");
   return {
     name: clean(item.name),
-    description: clean(item.description),
-    recipeCategory: clean(item.recipeCategory),
-    recipeCuisine: clean(item.recipeCuisine),
     recipeYield: clean(item.recipeYield),
     prepTime: formatDuration(item.prepTime),
     cookTime: formatDuration(item.cookTime),
     totalTime: formatDuration(item.totalTime),
     recipeIngredient: Array.isArray(item.recipeIngredient) ? item.recipeIngredient.map(clean).filter(Boolean) : [],
     recipeInstructions: instructions,
-    author: cleanAuthor(item.author),
-    story
   };
 }
 function collectRecipes(node, output) {
@@ -150,10 +144,6 @@ function clean(value) {
   if (typeof value === "object") return clean(value.name || value.text || "");
   return String(value).replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim();
 }
-function cleanAuthor(author) {
-  if (Array.isArray(author)) return author.map(cleanAuthor).filter(Boolean).join(", ");
-  return clean(author);
-}
 function formatDuration(value) {
   if (!value) return "";
   const match = String(value).match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/i);
@@ -164,12 +154,4 @@ function formatDuration(value) {
   if (match[3]) parts.push(`${match[3]} min`);
   if (match[4]) parts.push(`${match[4]} sec`);
   return parts.join(" ") || "";
-}
-function extractIntro(html, description) {
-  // A conservative fallback: use a page meta description only when available.
-  // Broad paragraph scraping tends to capture adverts and unrelated page copy.
-  const meta = html.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']+)["']/i);
-  const value = meta ? clean(meta[1]) : "";
-  if (value && value.length > 45 && value !== clean(description)) return value;
-  return "";
 }

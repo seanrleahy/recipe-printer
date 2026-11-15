@@ -223,6 +223,46 @@ imageInput.addEventListener("change", async () => {
     imageInput.disabled = false;
   }
 });
+
+function parsePastedRecipe(raw) {
+  const lines = raw.split(/\r?\n/).map(x => x.replace(/\s+/g," ").trim()).filter(Boolean);
+  const heading = /^(ingredients?|what you need|you will need|method|instructions?|directions|preparation|to make|steps?)\s*:?[.]?$/i;
+  const quantity = /^(?:\d|½|⅓|⅔|¼|¾|\.?\d|a\s+(?:pinch|handful|splash|little|knob)|few\b|some\b|to taste\b)/i;
+  const action = /^(?:place|preheat|heat|add|stir|mix|whisk|cook|bake|roast|fry|simmer|bring|pour|season|peel|chop|slice|grate|combine|fold|serve|drain|meanwhile|next|then|once|with a few|transfer|remove|leave|cover|reduce|allow|tip|blend|toast|brush|sprinkle|squeeze|put)\b/i;
+  const servesMatch = raw.match(/(?:serves?|makes?)\s*:?[ \t]*([^\r\n]+)/i);
+  const getTime = re => (raw.match(re) || [])[1] || "";
+  const ingredientStart = lines.findIndex(x => /^(ingredients?|what you need|you will need)\s*:?[.]?$/i.test(x));
+  const methodStart = lines.findIndex(x => /^(method|instructions?|directions|preparation|to make|steps?)\s*:?[.]?$/i.test(x));
+  const servesIndex = lines.findIndex(x => /^(serves?|makes?)\s*:?\s*\S+/i.test(x));
+  let title = servesIndex > 0 ? lines.slice(0,servesIndex).filter(x=>x.length<110).slice(-1)[0] : "";
+  if (!title && ingredientStart > 0) title=lines.slice(0,ingredientStart).filter(x=>x.length<110).slice(-1)[0];
+  const start = ingredientStart>=0 ? ingredientStart+1 : servesIndex>=0 ? servesIndex+1 : -1;
+  let ingredients = start>=0 ? lines.slice(start,methodStart>start?methodStart:lines.length) : [];
+  ingredients=ingredients.filter(x=>!/^to serve\s*:?[.]?$/i.test(x));
+  const inferred=ingredients.findIndex(x=>action.test(x)&&!quantity.test(x));
+  let instructions=methodStart>=0 ? lines.slice(methodStart+1) : [];
+  if(methodStart<0 && inferred>=0) instructions=ingredients.splice(inferred);
+  ingredients=ingredients.filter(x=>quantity.test(x)||(ingredientStart>=0&&x.length>1));
+  instructions=instructions.filter(x=>! /^(?:by|photo by|image by)\s/i.test(x));
+  return {name:title||"",recipeYield:servesMatch?servesMatch[1].trim():"",prepTime:getTime(/prep(?:aration)?\s*time\s*:?\s*([^\r\n]+)/i),cookTime:getTime(/cook(?:ing)?\s*time\s*:?\s*([^\r\n]+)/i),recipeIngredient:ingredients,recipeInstructions:instructions};
+}
+document.querySelector("#make-from-pasted").addEventListener("click", () => {
+  const raw=document.querySelector("#pasted-recipe-text").value.trim();
+  const status=document.querySelector("#paste-status");
+  if(!raw){status.textContent="Paste the recipe text first.";return;}
+  const recipe=parsePastedRecipe(raw);
+  if(!recipe.recipeIngredient.length||!recipe.recipeInstructions.length){status.textContent="I couldn't confidently separate the ingredients and method. Copy from the recipe title through the final method step, then try again.";return;}
+  document.querySelector("#ocr-title").value=recipe.name;
+  document.querySelector("#ocr-ingredients").value=recipe.recipeIngredient.join("\n");
+  document.querySelector("#ocr-method").value=recipe.recipeInstructions.join("\n\n");
+  document.querySelector("#ocr-serves").value=recipe.recipeYield;
+  document.querySelector("#ocr-prep").value=recipe.prepTime;
+  document.querySelector("#ocr-cook").value=recipe.cookTime;
+  ocrReview.hidden=false;
+  status.textContent="Recipe found. Check the ingredients and method below before printing.";
+  ocrReview.scrollIntoView({behavior:"smooth",block:"start"});
+});
+
 document.querySelector("#make-from-photos").addEventListener("click", () => {
   const ingredients = document.querySelector("#ocr-ingredients").value.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
   const instructions = document.querySelector("#ocr-method").value.split(/\n\s*\n|\r?\n/).map(x => x.trim()).filter(Boolean);

@@ -243,6 +243,8 @@ function parsePastedRecipe(raw) {
   let instructions=methodStart>=0 ? lines.slice(methodStart+1) : [];
   if(methodStart<0 && inferred>=0) instructions=ingredients.splice(inferred);
   ingredients=ingredients.filter(x=>quantity.test(x)||(ingredientStart>=0&&x.length>1));
+  const footerIndex=instructions.findIndex(x=>/^(?:header image by|image by|photo by|to learn all about|hungry for more|sign up|copyright|©)\b/i.test(x));
+  if(footerIndex>=0) instructions=instructions.slice(0,footerIndex);
   instructions=instructions.filter(x=>! /^(?:by|photo by|image by)\s/i.test(x));
   return {name:title||"",recipeYield:servesMatch?servesMatch[1].trim():"",prepTime:getTime(/prep(?:aration)?\s*time\s*:?\s*([^\r\n]+)/i),cookTime:getTime(/cook(?:ing)?\s*time\s*:?\s*([^\r\n]+)/i),recipeIngredient:ingredients,recipeInstructions:instructions};
 }

@@ -106,8 +106,49 @@ function extractRecipe(html) {
     cookTime: formatDuration(item.cookTime),
     totalTime: formatDuration(item.totalTime),
     recipeIngredient: Array.isArray(item.recipeIngredient) ? item.recipeIngredient.map(clean).filter(Boolean) : [],
+    recipeIngredientSections: extractIngredientSections(item),
     recipeInstructions: instructions,
   };
+}
+function extractIngredientSections(item) {
+  const source = item.recipeIngredient;
+  if (!Array.isArray(source)) return [];
+  const sections = [];
+  let current = { name: "", ingredients: [] };
+  const pushCurrent = () => {
+    if (current.ingredients.length) sections.push(current);
+  };
+  const startSection = name => {
+    pushCurrent();
+    current = { name: clean(name).replace(/^#+\\s*/, "").replace(/^\\[|\\]$/g, "").replace(/:$/, "").trim(), ingredients: [] };
+  };
+  for (const entry of source) {
+    if (entry && typeof entry === "object" && !Array.isArray(entry)) {
+      const name = entry.name || entry.title || entry.groupName || entry.section;
+      const nested = entry.recipeIngredient || entry.ingredients || entry.itemListElement || entry.items;
+      if (Array.isArray(nested)) {
+        if (name) startSection(name);
+        for (const ingredient of nested) {
+          const text = clean(ingredient);
+          if (text) current.ingredients.push(text);
+        }
+        continue;
+      }
+      const text = clean(entry);
+      if (text) current.ingredients.push(text);
+      continue;
+    }
+    const text = clean(entry);
+    if (!text) continue;
+    const heading = text.match(/^(?:#{1,4}\\s*(.+)|\\[(.+)\\]|(?:ingredients?\\s+for|for)\\s+(.+):)$/i);
+    if (heading) {
+      startSection(heading[1] || heading[2] || heading[3]);
+    } else {
+      current.ingredients.push(text);
+    }
+  }
+  pushCurrent();
+  return sections.length > 1 || (sections.length === 1 && sections[0].name) ? sections : [];
 }
 function collectRecipes(node, output) {
   if (!node) return;

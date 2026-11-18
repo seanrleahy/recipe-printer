@@ -57,15 +57,38 @@ function renderRecipe(recipe) {
   const total = durationText(recipe.totalTime);
   const yieldText = Array.isArray(recipe.recipeYield) ? recipe.recipeYield.join(", ") : recipe.recipeYield || "";
   [addMeta("Serves", yieldText), addMeta("Prep time", prep), addMeta("Cook time", cook || total)].filter(Boolean).forEach(x => meta.append(x));
-  const ingredients = Array.isArray(recipe.recipeIngredient) ? recipe.recipeIngredient : [];
+  const rawIngredients = Array.isArray(recipe.recipeIngredient) ? recipe.recipeIngredient : [];
+  const ingredientSections = Array.isArray(recipe.recipeIngredientSections) && recipe.recipeIngredientSections.length
+    ? recipe.recipeIngredientSections
+    : [{ name: "", ingredients: rawIngredients }];
+  const ingredientCount = ingredientSections.reduce((total, section) => total + (section.ingredients || []).length, 0);
   const printableRecipe = document.querySelector("#printable-recipe");
-  printableRecipe.classList.toggle("many-ingredients", ingredients.length >= 18);
+  printableRecipe.classList.toggle("many-ingredients", ingredientCount >= 18);
+  const ingredientContainer = document.querySelector(".ingredients-section");
+  ingredientContainer.querySelectorAll(".ingredient-group").forEach(node => node.remove());
   const ingredientList = document.querySelector("#ingredient-list");
-  ingredientList.replaceChildren();
-  ingredients.forEach(text => {
-    const li = document.createElement("li");
-    li.textContent = text;
-    ingredientList.append(li);
+  ingredientList.hidden = true;
+  ingredientSections.forEach((section, index) => {
+    const items = Array.isArray(section.ingredients) ? section.ingredients : [];
+    if (!items.length) return;
+    const group = document.createElement("div");
+    group.className = "ingredient-group";
+    if (section.name) {
+      const heading = document.createElement("h3");
+      heading.className = "ingredient-group-title";
+      heading.textContent = section.name;
+      group.append(heading);
+    }
+    const list = document.createElement("ul");
+    list.className = "ingredient-list";
+    if (index === 0 && !section.name) list.id = "ingredient-list";
+    items.forEach(text => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      list.append(li);
+    });
+    group.append(list);
+    ingredientContainer.append(group);
   });
   const instructions = normaliseInstructions(recipe.recipeInstructions || []);
   const instructionList = document.querySelector("#instruction-list");
@@ -134,7 +157,7 @@ document.querySelector("#back-button").addEventListener("click", () => {
 
 // A bookmarklet runs on the recipe page itself, so it can read structured data
 // even when that site's server blocks requests from the printer.
-const browserHelper = 'javascript:(()=>{const out=[];const walk=x=>{if(!x)return;if(Array.isArray(x)){x.forEach(walk);return}if(typeof x!=="object")return;const t=Array.isArray(x["@type"])?x["@type"]:[x["@type"]];if(t.some(v=>String(v).toLowerCase()==="recipe"))out.push(x);Object.values(x).forEach(v=>{if(v&&typeof v==="object")walk(v)})};document.querySelectorAll(\'script[type="application/ld+json"]\').forEach(s=>{try{walk(JSON.parse(s.textContent))}catch(e){}});if(!out.length){alert("No recipe data was found on this page. Try a page with a full recipe card.");return}const r=out.sort((a,b)=>(b.recipeIngredient?.length||0)-(a.recipeIngredient?.length||0))[0];const data={name:r.name||document.title,recipeYield:r.recipeYield||"",prepTime:r.prepTime||"",cookTime:r.cookTime||"",totalTime:r.totalTime||"",recipeIngredient:r.recipeIngredient||[],recipeInstructions:r.recipeInstructions||[]};if(!data.recipeIngredient.length||!data.recipeInstructions.length){alert("The page did not expose a complete recipe card. You can try uploading screenshots instead.");return}location.href="' + APP_URL + '#import="+encodeURIComponent(JSON.stringify(data))})()';
+const browserHelper = 'javascript:(()=>{const out=[];const walk=x=>{if(!x)return;if(Array.isArray(x)){x.forEach(walk);return}if(typeof x!=="object")return;const t=Array.isArray(x["@type"])?x["@type"]:[x["@type"]];if(t.some(v=>String(v).toLowerCase()==="recipe"))out.push(x);Object.values(x).forEach(v=>{if(v&&typeof v==="object")walk(v)})};document.querySelectorAll(\'script[type="application/ld+json"]\').forEach(s=>{try{walk(JSON.parse(s.textContent))}catch(e){}});if(!out.length){alert("No recipe data was found on this page. Try a page with a full recipe card.");return}const r=out.sort((a,b)=>(b.recipeIngredient?.length||0)-(a.recipeIngredient?.length||0))[0];const data={name:r.name||document.title,recipeYield:r.recipeYield||"",prepTime:r.prepTime||"",cookTime:r.cookTime||"",totalTime:r.totalTime||"",recipeIngredient:r.recipeIngredient||[],recipeIngredientSections:r.recipeIngredientSections||r.ingredientSections||[],recipeInstructions:r.recipeInstructions||[]};if(!data.recipeIngredient.length||!data.recipeInstructions.length){alert("The page did not expose a complete recipe card. You can try uploading screenshots instead.");return}location.href="' + APP_URL + '#import="+encodeURIComponent(JSON.stringify(data))})()';
 document.querySelector("#copy-import-helper").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(browserHelper);
@@ -155,7 +178,7 @@ function importFromHash() {
   if (!location.hash.startsWith("#import=")) return;
   try {
     const recipe = JSON.parse(decodeURIComponent(location.hash.slice(8)));
-    if (!recipe || !Array.isArray(recipe.recipeIngredient)) throw new Error("Invalid recipe");
+    if (!recipe || (!Array.isArray(recipe.recipeIngredient) && !Array.isArray(recipe.recipeIngredientSections))) throw new Error("Invalid recipe");
     renderRecipe(recipe);
     history.replaceState(null, "", location.pathname + location.search);
   } catch {

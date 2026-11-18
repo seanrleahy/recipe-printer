@@ -135,8 +135,22 @@ function extractIngredientSections(item, html) {
  const groups=[]; let current={name:"",ingredients:[]}; let h=0; let searchFrom=start+11;
  for (const ingredient of ingredients) {
    const key=normal(ingredient);
-   const at=key.length>3?text.indexOf(key,searchFrom):-1;
-   if(at>=0) searchFrom=at+key.length;
+   let at=key.length>3?text.indexOf(key,searchFrom):-1;
+   // Recipe JSON-LD wording often differs slightly from the visible ingredient list.
+   // If the full string does not match, locate a distinctive contiguous phrase instead.
+   if(at<0) {
+     const words=key.split(" ");
+     for(let size=Math.min(4,words.length);size>=2&&at<0;size--) {
+       const matches=[];
+       for(let offset=0;offset+size<=words.length;offset++) {
+         const phrase=words.slice(offset,offset+size).join(" ");
+         const found=text.indexOf(phrase,searchFrom);
+         if(found>=0) matches.push(found);
+       }
+       if(matches.length) at=Math.min(...matches);
+     }
+   }
+   if(at>=0) searchFrom=at+Math.max(1,key.length);
    while(at>=0&&h<headings.length&&headings[h].at<at) {
      if(current.ingredients.length) groups.push(current);
      current={name:headings[h].name,ingredients:[]}; h++;

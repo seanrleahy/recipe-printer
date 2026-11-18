@@ -118,7 +118,7 @@ function extractIngredientSections(item, html) {
  const start = text.lastIndexOf("ingredients", end < 0 ? text.length : end);
  if (start < 0) return [];
  const stop = end < 0 ? text.length : end;
- const names = ["Chicken Marinade Ingredients","Chicken Marinade","Ingredients for Seasoned Flour Mixture to Bread Chicken","Flour Mixture for Breading Chicken","Toppings","Crispy Chicken Burger Sauce","Breadcrumb","Marinade"];
+ const names = ["Chicken Marinade Ingredients","Chicken Marinade","Ingredients for Seasoned Flour Mixture to Bread Chicken","Flour Mixture for Breading Chicken","Toppings","Crispy Chicken Burger Sauce","Breadcrumb"];
  const headings = names.map(name => ({name, at:text.indexOf(normal(name),start+11)})).filter(x=>x.at>=0&&x.at<stop).sort((a,b)=>a.at-b.at);
  if (!headings.length) return [];
  const ingredients = (item.recipeIngredient || []).map(clean).filter(Boolean);

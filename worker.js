@@ -114,18 +114,19 @@ function extractIngredientSections(item, html) {
  const plain = String(html).replace(/<script\b[\s\S]*?<\/script>/gi, " ").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<\/(?:h[1-6]|p|li|ul|ol|div|section|article|br)\s*>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/gi, " ").replace(/&amp;/gi, "&").replace(/&rsquo;|&#8217;/gi, "'").replace(/\s+/g, " ");
  const normal = value => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
  const text = normal(plain);
- const start = text.indexOf("ingredients");
- const end = text.indexOf("instructions", start + 11);
+ const end = text.lastIndexOf("instructions");
+ const start = text.lastIndexOf("ingredients", end < 0 ? text.length : end);
  if (start < 0) return [];
  const stop = end < 0 ? text.length : end;
- const names = ["Chicken Marinade Ingredients","Ingredients for Seasoned Flour Mixture to Bread Chicken","Flour Mixture for Breading Chicken","Toppings","Crispy Chicken Burger Sauce","Breadcrumb","Marinade"];
+ const names = ["Chicken Marinade Ingredients","Chicken Marinade","Ingredients for Seasoned Flour Mixture to Bread Chicken","Flour Mixture for Breading Chicken","Toppings","Crispy Chicken Burger Sauce","Breadcrumb","Marinade"];
  const headings = names.map(name => ({name, at:text.indexOf(normal(name),start+11)})).filter(x=>x.at>=0&&x.at<stop).sort((a,b)=>a.at-b.at);
  if (!headings.length) return [];
  const ingredients = (item.recipeIngredient || []).map(clean).filter(Boolean);
- const groups=[]; let current={name:"",ingredients:[]}; let h=0;
+ const groups=[]; let current={name:"",ingredients:[]}; let h=0; let searchFrom=start+11;
  for (const ingredient of ingredients) {
    const key=normal(ingredient);
-   const at=key.length>3?text.indexOf(key,start+11):-1;
+   const at=key.length>3?text.indexOf(key,searchFrom):-1;
+   if(at>=0) searchFrom=at+key.length;
    while(at>=0&&h<headings.length&&headings[h].at<at) {
      if(current.ingredients.length) groups.push(current);
      current={name:headings[h].name,ingredients:[]}; h++;

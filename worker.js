@@ -119,7 +119,17 @@ function extractIngredientSections(item, html) {
  if (start < 0) return [];
  const stop = end < 0 ? text.length : end;
  const names = ["Chicken Marinade Ingredients","Chicken Marinade","Ingredients for Seasoned Flour Mixture to Bread Chicken","Flour Mixture for Breading Chicken","Toppings","Crispy Chicken Burger Sauce","Breadcrumb"];
- const headings = names.map(name => ({name, at:text.indexOf(normal(name),start+11)})).filter(x=>x.at>=0&&x.at<stop).sort((a,b)=>a.at-b.at);
+ const headings = names.map(name => ({name, at:text.indexOf(normal(name),start+11)})).filter(x=>x.at>=0&&x.at<stop);
+ const headingRegex = /<h[2-6]\b[^>]*>([\s\S]*?)<\/h[2-6]>/gi;
+ let headingMatch;
+ while ((headingMatch = headingRegex.exec(html))) {
+   const name = clean(headingMatch[1].replace(/<[^>]*>/g, " "));
+   const key = normal(name);
+   if (!key || /^(ingredients?|instructions?|directions|method|nutrition|recipe)$/.test(key)) continue;
+   const at = text.indexOf(key, start + 11);
+   if (at >= 0 && at < stop && !headings.some(h => h.at === at)) headings.push({name, at});
+ }
+ headings.sort((a,b)=>a.at-b.at);
  if (!headings.length) return [];
  const ingredients = (item.recipeIngredient || []).map(clean).filter(Boolean);
  const groups=[]; let current={name:"",ingredients:[]}; let h=0; let searchFrom=start+11;

@@ -257,6 +257,25 @@ imageInput.addEventListener("change", async () => {
   }
 });
 
+function splitIngredientSections(lines) {
+  const sections = [];
+  let current = { name: "", ingredients: [] };
+  const push = () => { if (current.ingredients.length) sections.push(current); };
+  const sectionHeading = /^(?:(.+?)\\s+ingredients?|ingredients?\\s+(?:for|to)\\s+(.+)|(?:chicken\\s+)?marinade|seasoned\\s+flour(?:\\s+mixture)?|flour\\s+mixture\\s+for\\s+breading(?:\\s+chicken)?|toppings|sauce|burger\\s+sauce|to\\s+serve)\\s*:?[.]?$/i;
+  for (const rawLine of lines) {
+    const line = String(rawLine).trim();
+    const match = line.match(sectionHeading);
+    if (match && !/^ingredients?$/i.test(line)) {
+      push();
+      current = { name: (match[1] || match[2] || line).replace(/:$/, "").trim(), ingredients: [] };
+    } else if (line) {
+      current.ingredients.push(line);
+    }
+  }
+  push();
+  return sections.length > 1 || (sections.length === 1 && sections[0].name) ? sections : [];
+}
+
 function parsePastedRecipe(raw) {
   const lines = raw.split(/\r?\n/).map(x => x.replace(/\s+/g, " ").trim()).filter(Boolean);
   const ingredientHeading = /^(?:ingredients?|what you need|you will need|shopping list)\s*:?[.]?$/i;
@@ -350,6 +369,7 @@ document.querySelector("#make-from-photos").addEventListener("click", () => {
     prepTime: document.querySelector("#ocr-prep").value.trim(),
     cookTime: document.querySelector("#ocr-cook").value.trim(),
     recipeIngredient: ingredients,
+    recipeIngredientSections: splitIngredientSections(ingredients),
     recipeInstructions: instructions
   });
 });
